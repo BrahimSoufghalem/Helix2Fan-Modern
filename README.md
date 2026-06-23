@@ -6,7 +6,7 @@
 [![Based On](https://img.shields.io/badge/Based%20On-helix2fan-orange)](https://github.com/faebstn96/helix2fan)
 [![DOI](https://img.shields.io/badge/DOI-10.1109%2FISBI53787.2023.10230511-1f425f.svg)](https://doi.org/10.1109/ISBI53787.2023.10230511)
 
-# Helix2Fan Improved 🚀
+# Helix2Fan Improved
 
 **A high-performance, dependency-free fork of [helix2fan](https://github.com/faebstn96/helix2fan)**
 
@@ -16,7 +16,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 This project provides a complete, modernized pipeline for loading, rebinning, and reconstructing raw helical CT projection data in the [DICOM-CT-PD](https://doi.org/10.1118/1.4935406) format.
 
@@ -26,21 +26,21 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 
 | Feature | Original helix2fan | Helix2Fan Improved |
 |---|---|---|
-| DICOM Sorting | Alphabetical (filename) | Physical (`InstanceNumber`) ✅ |
-| Curved→Flat Rebinning | ~2 hours `O(N³)` loops | ~1 minute vectorized ✅ |
-| Helical→Fan Rebinning | ~2 hours `O(N³)` loops | ~1 minute vectorized ✅ |
-| **Total Rebinning Time** | **~4 hours** | **~2 minutes** 🔥 |
-| FBP Reconstruction (CPU) | ❌ `torch_radon` broken | ~6 minutes (Numba) ✅ |
-| FBP Reconstruction (GPU) | ~15s `torch_radon` | ~13s ASTRA Toolbox ✅ |
-| Reconstruction Dependency | `torch_radon` (deprecated) | ASTRA (GPU) + Numba (CPU) ✅ |
-| Pipeline | Two separate scripts | Unified single command ✅ |
-| Setup Complexity | High (torch-radon patching) | Simple pip install ✅ |
+| DICOM Sorting | Alphabetical (filename) | Physical (`InstanceNumber`) |
+| Curved→Flat Rebinning | ~2 hours `O(N³)` loops | ~1 minute vectorized |
+| Helical→Fan Rebinning | ~2 hours `O(N³)` loops | ~1 minute vectorized |
+| **Total Rebinning Time** | **~4 hours** | **~2 minutes** |
+| FBP Reconstruction (CPU) | `torch_radon` broken | ~6 minutes (Numba) |
+| FBP Reconstruction (GPU) | ~15s `torch_radon` | ~13s ASTRA Toolbox |
+| Reconstruction Dependency | `torch_radon` (deprecated) | ASTRA (GPU) + Numba (CPU) |
+| Pipeline | Two separate scripts | Unified single command |
+| Setup Complexity | High (torch-radon patching) | Simple pip install |
 
 ---
 
-## 📊 Performance Benchmarks
+## Performance Benchmarks
 
-![Performance Benchmarks](/home/BArch/.gemini/antigravity/scratch/helix2fan_improved/performance_benchmark.png)
+![Performance Benchmarks](./img/performance_benchmark.png)
 
 > *Benchmarks measured on a typical abdomen CT scan with ~4000 projections (indices 12000–16000). Results may vary depending on scan size and hardware.*
 
@@ -52,7 +52,7 @@ The original code implemented both rebinning steps using **triple-nested pure Py
 |---|---|---|---|
 | Curved → Flat Detector | ~2 hours | ~1 minute | **×120** |
 | Helical → 2π Fan-Beam | ~2 hours | ~1 minute | **×120** |
-| **Total Rebinning** | **~4 hours** | **~2 minutes** | **×120** 🔥 |
+| **Total Rebinning** | **~4 hours** | **~2 minutes** | **×120** |
 
 This fork precomputes the entire interpolation coordinate grid **once** using NumPy broadcasting, then delegates the actual interpolation to `scipy.ndimage.map_coordinates` — a compiled C routine that processes the whole array in a single call.
 
@@ -60,9 +60,9 @@ This fork precomputes the entire interpolation coordinate grid **once** using Nu
 
 | Backend | Time | Status |
 |---|---|---|
-| `torch_radon` (original) | ~15 seconds | ⚠️ Deprecated — broken on modern PyTorch versions |
-| **Numba CPU** (this fork) | **~6 minutes** | ✅ Works on any machine, no GPU required |
-| **ASTRA GPU** (this fork) | **~13 seconds** | 🚀 Fastest — production quality, no patching needed |
+| `torch_radon` (original) | ~15 seconds | Deprecated — broken on modern PyTorch versions |
+| **Numba CPU** (this fork) | **~6 minutes** | Works on any machine, no GPU required |
+| **ASTRA GPU** (this fork) | **~13 seconds** | Fastest — production quality, no patching needed |
 
 The ASTRA GPU path delivers essentially the same speed as `torch_radon` — but with zero patching or compatibility issues, natively supporting all ASTRA 2D filters. The Numba CPU path is a full mathematical FBP implementation (cosine weighting → Ram-Lak filtering → fan-beam backprojection) that runs on any laptop or server. 
 
@@ -74,7 +74,7 @@ You can change the reconstruction filter directly from the command line using `-
 
 ---
 
-## 🌟 Key Improvements
+## Key Improvements
 
 
 ### 1. Chronological DICOM Sorting
@@ -94,12 +94,12 @@ Runtime Detection
       │
       ▼
   ASTRA Toolbox available?
-   ├── YES ──► 🚀 run_astra_fbp.py  (GPU, FBP_CUDA — fastest)
+   ├── YES ──► run_astra_fbp.py  (GPU, FBP_CUDA — fastest)
    │               │
    │            GPU fails?
-   │               └──► 💻 run_custom_fbp.py (CPU fallback)
+   │               └──► run_custom_fbp.py (CPU fallback)
    │
-   └── NO ───► 💻 run_custom_fbp.py  (CPU, Numba JIT — fast)
+   └── NO ───► run_custom_fbp.py  (CPU, Numba JIT — fast)
 ```
 
 - **`run_astra_fbp.py`**: Uses [ASTRA Toolbox](https://astra-toolbox.com/) `FBP_CUDA` projector for GPU-accelerated fan-beam reconstruction. Reconstructs hundreds of slices in seconds.
@@ -107,12 +107,12 @@ Runtime Detection
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 helix2fan_improved/
 │
-├── main.py                  # 🎯 Unified pipeline entry point (run this!)
+├── main.py                  # Unified pipeline entry point (run this!)
 ├── read_data.py             # DICOM-CT-PD reader with InstanceNumber sorting
 ├── rebinning_functions.py   # Vectorized curved→flat and helical→fan rebinning
 ├── helper.py                # TIFF stack save/load with embedded metadata
@@ -128,7 +128,7 @@ helix2fan_improved/
 
 ---
 
-## ⚙️ Setup
+## Setup
 
 ### Prerequisites
 - Python >= 3.8
@@ -166,7 +166,7 @@ This dataset provides raw helical CT projections for over 100 abdomen/chest/head
 
 ---
 
-## 🚀 Running the Pipeline
+## Running the Pipeline
 
 ### Basic Usage
 
@@ -212,9 +212,9 @@ All output is saved to the `out/` folder by default.
 
 ---
 
-## 🔬 Iterative Reconstruction (IR)
+## Iterative Reconstruction (IR)
 
-All iterative methods require **ASTRA Toolbox** and a **CUDA-capable GPU**. If ASTRA is not found, the pipeline automatically falls back to CPU FBP.
+All iterative methods require **ASTRA Toolbox** and a **CUDA-capable GPU**. Due to the high computational cost of iterative algorithms, running them on a CPU can take several hours per volume, making it highly impractical for general use. Therefore, IR methods are strictly restricted to GPU execution in this pipeline, while FBP remains fully supported on CPU. If ASTRA is not found, the pipeline automatically falls back to CPU FBP.
 
 ### Method Comparison
 
@@ -281,7 +281,7 @@ python main.py \
 
 ---
 
-## 💡 Tips
+## Tips
 
 - **Choosing `--idx_proj_start` / `--idx_proj_stop`:** You need to load enough helical projections to cover at least 360° for the body region you want. A range of ~4000 projections typically covers one rotation. Loading too few projections causes streak artifacts at the top and bottom slices.
 - **Selecting a region of interest:** Each scan has tens of thousands of projections. Start with the default range (12000–16000) and adjust based on which anatomical region you're interested in.
@@ -290,7 +290,7 @@ python main.py \
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 | Package | Purpose |
 |---|---|
@@ -306,7 +306,7 @@ python main.py \
 
 ---
 
-## 📝 License & Attribution
+## License & Attribution
 
 This project is distributed under the **[Apache License 2.0](./LICENSE.md)**.
 
