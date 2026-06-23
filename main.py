@@ -115,10 +115,17 @@ def run(parser):
             print("\n📊 Generating visualization...")
             sino_stack, _ = load_tiff_stack_with_metadata(flat_fan_path)
             reco_stack, _ = load_tiff_stack_with_metadata(output_file)
-            mid_z = sino_stack.shape[0] // 2
             
-            sino_img = sino_stack[mid_z]
-            reco_img = reco_stack[mid_z]
+            slice_idx = getattr(args, 'plot_slice', -1)
+            if slice_idx == -1:
+                idx_sino = sino_stack.shape[0] // 2
+                idx_reco = reco_stack.shape[0] // 2
+            else:
+                idx_sino = min(slice_idx, sino_stack.shape[0] - 1)
+                idx_reco = min(slice_idx, reco_stack.shape[0] - 1)
+            
+            sino_img = sino_stack[idx_sino]
+            reco_img = reco_stack[idx_reco]
 
             if args.plot_result == 'both':
                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
@@ -172,4 +179,6 @@ if __name__ == '__main__':
     parser.add_argument('--plot_result', type=str, default='both',
                         choices=['none', 'sinogram', 'reconstruction', 'both'],
                         help='Automatically display a plot after reconstruction: "both" (default), "sinogram", "reconstruction", or "none".')
+    parser.add_argument('--plot_slice', type=int, default=-1,
+                        help='Specific slice index to plot. Default is -1 (which automatically selects the middle slice).')
     run(parser)
