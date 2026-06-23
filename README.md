@@ -32,6 +32,7 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 | **Total Rebinning Time** | **~4 hours** | **~2 minutes** |
 | FBP Reconstruction (CPU) | `torch_radon` broken | ~6 minutes (Numba) |
 | FBP Reconstruction (GPU) | ~15s `torch_radon` | ~13s ASTRA Toolbox |
+| Iterative Reconstruction (IR)| Not Supported | SIRT, SART, CGLS, TV-SIRT |
 | Reconstruction Dependency | `torch_radon` (deprecated) | ASTRA (GPU) + Numba (CPU) |
 | Pipeline | Two separate scripts | Unified single command |
 | Setup Complexity | High (torch-radon patching) | Simple pip install |
@@ -104,6 +105,9 @@ Runtime Detection
 
 - **`run_astra_fbp.py`**: Uses [ASTRA Toolbox](https://astra-toolbox.com/) `FBP_CUDA` projector for GPU-accelerated fan-beam reconstruction. Reconstructs hundreds of slices in seconds.
 - **`run_custom_fbp.py`**: A pure mathematical FBP implementation (cosine weighting → Ram-Lak filtering → fan-beam backprojection) accelerated with [Numba](https://numba.pydata.org/) JIT compilation. No GPU required.
+
+### 5. Iterative Reconstruction (IR) Support
+The original project only supported basic FBP. This fork introduces advanced Iterative Reconstruction methods including **SIRT**, **SART**, **CGLS**, and **TV-SIRT** (Total Variation regularized SIRT for edge-preserving denoising). These methods are essential for modern low-dose CT research and are fully integrated into the pipeline via ASTRA's GPU algorithms.
 
 ---
 
