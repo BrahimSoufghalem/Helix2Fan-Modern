@@ -6,9 +6,9 @@
 [![Based On](https://img.shields.io/badge/Based%20On-helix2fan-orange)](https://github.com/faebstn96/helix2fan)
 [![DOI](https://img.shields.io/badge/DOI-10.1109%2FISBI53787.2023.10230511-1f425f.svg)](https://doi.org/10.1109/ISBI53787.2023.10230511)
 
-# Helix2Fan Improved
+# Helix2Fan Modern
 
-**A high-performance, dependency-free fork of [helix2fan](https://github.com/faebstn96/helix2fan)**
+**A high-performance, modernized fork of [helix2fan](https://github.com/faebstn96/helix2fan)**
 
 *Load DICOM-CT-PD helical CT projections → Rebin → Reconstruct — all in one command.*
 
@@ -24,7 +24,7 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 
 **Compared to the original `helix2fan`:**
 
-| Feature | Original helix2fan | Helix2Fan Improved |
+| Feature | Original helix2fan | Helix2Fan Modern |
 |---|---|---|
 | DICOM Sorting | Alphabetical (filename) | Physical (`InstanceNumber`) |
 | Curved→Flat Rebinning | ~2 hours `O(N³)` loops | ~1 minute vectorized |
@@ -48,7 +48,7 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 
 The original code implemented both rebinning steps using **triple-nested pure Python loops** — iterating over every combination of (view angle × detector row × detector column). For 4000 projections on a typical detector grid of ~700×64 pixels, this means hundreds of millions of individual Python interpreter calls.
 
-| Step | Original helix2fan | Helix2Fan Improved | Speedup |
+| Step | Original helix2fan | Helix2Fan Modern | Speedup |
 |---|---|---|---|
 | Curved → Flat Detector | ~2 hours | ~1 minute | **×120** |
 | Helical → 2π Fan-Beam | ~2 hours | ~1 minute | **×120** |
@@ -110,7 +110,7 @@ Runtime Detection
 ## Project Structure
 
 ```
-helix2fan_improved/
+Helix2Fan-Modern/
 │
 ├── main.py                  # Unified pipeline entry point (run this!)
 ├── read_data.py             # DICOM-CT-PD reader with InstanceNumber sorting
