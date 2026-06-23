@@ -137,6 +137,13 @@ def run(parser):
             # 3. Reconstructed Slice (CT)
             reco_img = reco_stack[idx_reco]
             vmin_reco, vmax_reco = np.percentile(reco_img, 1), np.percentile(reco_img, 99)
+            
+            # Determine Reconstruction Title
+            if args.recon_method == 'fbp':
+                recon_method_str = "FBP"
+            else:
+                recon_method_str = f"{args.recon_method.upper()}, {args.iterations} Iters"
+            reco_title = f'Reconstructed Slice {idx_reco} ({recon_method_str}, Auto HU)'
 
             plot_save_path = output_file.parent / f"{args.scan_id}_visualization.png"
 
@@ -156,7 +163,7 @@ def run(parser):
                 
                 # Reconstruction
                 ax3.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
-                ax3.set_title(f'Reconstructed Slice {idx_reco} (Auto HU)')
+                ax3.set_title(reco_title)
                 ax3.axis('off')
                 
                 plt.tight_layout()
@@ -179,7 +186,7 @@ def run(parser):
             elif args.plot_result == 'reconstruction':
                 plt.figure(figsize=(8, 8))
                 plt.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
-                plt.title(f'Reconstructed Slice {idx_reco} (Auto HU)')
+                plt.title(reco_title)
                 plt.axis('off')
                 plt.tight_layout()
                 plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
