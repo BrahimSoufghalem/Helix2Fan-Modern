@@ -113,8 +113,8 @@ def run(parser):
         try:
             import matplotlib.pyplot as plt
             print("\n📊 Generating visualization...")
-            sino_stack, _ = load_tiff_stack_with_metadata(str(flat_fan_path))
-            reco_stack, _ = load_tiff_stack_with_metadata(str(output_file))
+            sino_stack, _ = load_tiff_stack_with_metadata(flat_fan_path)
+            reco_stack, _ = load_tiff_stack_with_metadata(output_file)
             mid_z = sino_stack.shape[0] // 2
             
             sino_img = sino_stack[mid_z]
