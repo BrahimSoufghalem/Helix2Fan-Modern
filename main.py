@@ -118,10 +118,10 @@ def run(parser):
             
             slice_idx = getattr(args, 'plot_slice', -1)
             if slice_idx == -1:
-                idx_sino = sino_stack.shape[0] // 2
+                idx_sino = sino_stack.shape[2] // 2
                 idx_reco = reco_stack.shape[0] // 2
             else:
-                idx_sino = min(slice_idx, sino_stack.shape[0] - 1)
+                idx_sino = min(slice_idx, sino_stack.shape[2] - 1)
                 idx_reco = min(slice_idx, reco_stack.shape[0] - 1)
             
             idx_view = sino_stack.shape[0] // 2
