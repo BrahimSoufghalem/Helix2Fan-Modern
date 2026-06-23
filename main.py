@@ -131,7 +131,7 @@ def run(parser):
             vmin_drr, vmax_drr = np.percentile(drr_img, 2), np.percentile(drr_img, 98)
             
             # 2. Perfect Fan-Beam Sinogram
-            sino_img = sino_stack[:, :, idx_sino]
+            sino_img = sino_stack[:, :, idx_sino].T
             vmin_sino, vmax_sino = np.percentile(sino_img, 2), np.percentile(sino_img, 98)
             
             # 3. Reconstructed Slice (CT)
@@ -151,8 +151,8 @@ def run(parser):
                 # Sinogram
                 ax2.imshow(sino_img, cmap='gray', aspect='auto', vmin=vmin_sino, vmax=vmax_sino)
                 ax2.set_title(f'Sinogram (Slice {idx_sino})')
-                ax2.set_xlabel("Detector Channels")
-                ax2.set_ylabel("Projection Angles")
+                ax2.set_xlabel("Projection Angles")
+                ax2.set_ylabel("Detector Channels")
                 
                 # Reconstruction
                 ax3.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
@@ -168,8 +168,8 @@ def run(parser):
                 plt.figure(figsize=(12, 10))
                 plt.imshow(sino_img, cmap='gray', aspect='auto', vmin=vmin_sino, vmax=vmax_sino)
                 plt.title(f'Perfect Fan-Beam Sinogram - Slice {idx_sino}', fontsize=16, fontweight='bold')
-                plt.xlabel("Detector Channels", fontsize=12)
-                plt.ylabel("Projection Angles", fontsize=12)
+                plt.xlabel("Projection Angles", fontsize=12)
+                plt.ylabel("Detector Channels", fontsize=12)
                 plt.colorbar(label="Attenuation")
                 plt.tight_layout()
                 plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
