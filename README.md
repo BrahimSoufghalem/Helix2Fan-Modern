@@ -107,7 +107,12 @@ Runtime Detection
 - **`run_custom_fbp.py`**: A pure mathematical FBP implementation (cosine weighting → Ram-Lak filtering → fan-beam backprojection) accelerated with [Numba](https://numba.pydata.org/) JIT compilation. No GPU required.
 
 ### 5. Iterative Reconstruction (IR) Support
-The original project only supported basic FBP. This fork introduces advanced Iterative Reconstruction methods including **SIRT**, **SART**, **CGLS**, and **TV-SIRT** (Total Variation regularized SIRT for edge-preserving denoising). These methods are essential for modern low-dose CT research and are fully integrated into the pipeline via ASTRA's GPU algorithms.
+In addition to FBP, the modern pipeline supports GPU-accelerated iterative reconstruction methods (SIRT, SART, CGLS, TV-SIRT) via the ASTRA Toolbox, providing superior image quality for noisy or low-dose scans.
+
+### 6. Automatic Visualization
+The pipeline now includes a built-in automated visualization feature that generates a beautiful side-by-side comparison of the X-ray DRR, the perfect Fan-Beam Sinogram, and the Reconstructed CT Slice. The CT slice automatically applies dynamic Hounsfield Unit (HU) windowing for optimal soft-tissue contrast, and the title dynamically reflects the reconstruction method used (e.g., CGLS, 50 iterations).
+
+![Automatic Visualization Pipeline](IMG/visualization_example.png)
 
 ---
 
