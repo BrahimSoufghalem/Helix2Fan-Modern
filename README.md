@@ -112,7 +112,7 @@ In addition to FBP, the modern pipeline supports GPU-accelerated iterative recon
 ### 6. Automatic Visualization
 The pipeline now includes a built-in automated visualization feature that generates a beautiful side-by-side comparison of the X-ray DRR, the perfect Fan-Beam Sinogram, and the Reconstructed CT Slice. The CT slice automatically applies dynamic Hounsfield Unit (HU) windowing for optimal soft-tissue contrast, and the title dynamically reflects the reconstruction method used (e.g., CGLS, 50 iterations).
 
-![Automatic Visualization Pipeline](IMG/visualization_example.png)
+![Automatic Visualization Pipeline](./img/scan_002_cgls_visualization.png)
 
 ---
 
