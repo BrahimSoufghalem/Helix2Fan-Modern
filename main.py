@@ -109,6 +109,47 @@ def run(parser):
         
     print("\n✅ End-to-end pipeline completed successfully!")
 
+    if getattr(args, 'plot_result', 'none') != 'none':
+        try:
+            import matplotlib.pyplot as plt
+            print("\n📊 Generating visualization...")
+            sino_stack, _ = load_tiff_stack_with_metadata(str(flat_fan_path))
+            reco_stack, _ = load_tiff_stack_with_metadata(str(output_file))
+            mid_z = sino_stack.shape[0] // 2
+            
+            sino_img = sino_stack[mid_z]
+            reco_img = reco_stack[mid_z]
+
+            if args.plot_result == 'both':
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+                ax1.imshow(sino_img, cmap='gray', aspect='auto')
+                ax1.set_title('Sinogram (Central Slice)')
+                ax1.axis('off')
+                
+                ax2.imshow(reco_img, cmap='gray', vmin=0, vmax=np.percentile(reco_img, 99))
+                ax2.set_title('Reconstructed Slice')
+                ax2.axis('off')
+                plt.tight_layout()
+                plt.show()
+                
+            elif args.plot_result == 'sinogram':
+                plt.figure(figsize=(8, 6))
+                plt.imshow(sino_img, cmap='gray', aspect='auto')
+                plt.title('Sinogram (Central Slice)')
+                plt.axis('off')
+                plt.tight_layout()
+                plt.show()
+                
+            elif args.plot_result == 'reconstruction':
+                plt.figure(figsize=(8, 8))
+                plt.imshow(reco_img, cmap='gray', vmin=0, vmax=np.percentile(reco_img, 99))
+                plt.title('Reconstructed Slice')
+                plt.axis('off')
+                plt.tight_layout()
+                plt.show()
+        except Exception as e:
+            print(f"⚠️ Could not plot results: {e}")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -128,4 +169,7 @@ if __name__ == '__main__':
     parser.add_argument('--tv_lambda', type=float, default=0.01,
                         help='TV regularisation strength (tv-sirt only, default: 0.01).')
     parser.add_argument('--save_all', dest='save_all', action='store_true', help='Save all intermediate results.')
+    parser.add_argument('--plot_result', type=str, default='both',
+                        choices=['none', 'sinogram', 'reconstruction', 'both'],
+                        help='Automatically display a plot after reconstruction: "both" (default), "sinogram", "reconstruction", or "none".')
     run(parser)

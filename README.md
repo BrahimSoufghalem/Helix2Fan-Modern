@@ -204,6 +204,7 @@ All output is saved to the `out/` folder by default.
 | `--idx_proj_start` | `12000` | First DICOM index to load |
 | `--idx_proj_stop` | `16000` | Last DICOM index to load |
 | `--save_all` | `False` | Also saves intermediate curved-helix and flat-helix projections |
+| `--plot_result`| `both` | Display visualization after run: `both`, `sinogram`, `reconstruction`, or `none` |
 
 **Reconstruction arguments:**
 
