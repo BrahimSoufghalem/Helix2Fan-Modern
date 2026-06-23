@@ -139,10 +139,10 @@ def run(parser):
             vmin_reco, vmax_reco = np.percentile(reco_img, 1), np.percentile(reco_img, 99)
             
             # Determine Reconstruction Title
-            if args.recon_method == 'fbp':
+            if args.reco_method == 'fbp':
                 recon_method_str = "FBP"
             else:
-                recon_method_str = f"{args.recon_method.upper()}, {args.iterations} Iters"
+                recon_method_str = f"{args.reco_method.upper()}, {args.iterations} Iters"
             reco_title = f'Reconstructed Slice {idx_reco} ({recon_method_str}, Auto HU)'
 
             plot_save_path = output_file.parent / f"{args.scan_id}_visualization.png"
