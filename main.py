@@ -127,6 +127,8 @@ def run(parser):
             sino_img = sino_stack[idx_sino]
             reco_img = reco_stack[idx_reco]
 
+            plot_save_path = output_file.parent / f"{args.scan_id}_visualization.png"
+
             if args.plot_result == 'both':
                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
                 ax1.imshow(sino_img, cmap='gray', aspect='auto')
@@ -137,6 +139,8 @@ def run(parser):
                 ax2.set_title('Reconstructed Slice')
                 ax2.axis('off')
                 plt.tight_layout()
+                plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
+                print(f"🖼️ Visualization saved to: {plot_save_path}")
                 plt.show()
                 
             elif args.plot_result == 'sinogram':
@@ -145,6 +149,8 @@ def run(parser):
                 plt.title('Sinogram (Central Slice)')
                 plt.axis('off')
                 plt.tight_layout()
+                plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
+                print(f"🖼️ Visualization saved to: {plot_save_path}")
                 plt.show()
                 
             elif args.plot_result == 'reconstruction':
@@ -153,6 +159,8 @@ def run(parser):
                 plt.title('Reconstructed Slice')
                 plt.axis('off')
                 plt.tight_layout()
+                plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
+                print(f"🖼️ Visualization saved to: {plot_save_path}")
                 plt.show()
         except Exception as e:
             print(f"⚠️ Could not plot results: {e}")
