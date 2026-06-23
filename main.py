@@ -124,30 +124,53 @@ def run(parser):
                 idx_sino = min(slice_idx, sino_stack.shape[0] - 1)
                 idx_reco = min(slice_idx, reco_stack.shape[0] - 1)
             
-            sino_img = sino_stack[idx_sino]
+            idx_view = sino_stack.shape[0] // 2
+            
+            # 1. DRR (X-ray projection)
+            drr_img = sino_stack[idx_view, :, :].T
+            vmin_drr, vmax_drr = np.percentile(drr_img, 2), np.percentile(drr_img, 98)
+            
+            # 2. Perfect Fan-Beam Sinogram
+            sino_img = sino_stack[:, :, idx_sino]
+            vmin_sino, vmax_sino = np.percentile(sino_img, 2), np.percentile(sino_img, 98)
+            
+            # 3. Reconstructed Slice (CT)
             reco_img = reco_stack[idx_reco]
+            vmin_reco, vmax_reco = np.percentile(reco_img, 1), np.percentile(reco_img, 99)
 
             plot_save_path = output_file.parent / f"{args.scan_id}_visualization.png"
 
-            if args.plot_result == 'both':
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
-                ax1.imshow(sino_img, cmap='gray', aspect='auto')
-                ax1.set_title('Sinogram (Central Slice)')
+            if args.plot_result in ['both', 'all']:
+                fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
+                
+                # DRR
+                ax1.imshow(drr_img, cmap='gray', aspect='auto', vmin=vmin_drr, vmax=vmax_drr)
+                ax1.set_title(f'X-ray DRR (View {idx_view})')
                 ax1.axis('off')
                 
-                ax2.imshow(reco_img, cmap='gray', vmin=0, vmax=np.percentile(reco_img, 99))
-                ax2.set_title('Reconstructed Slice')
-                ax2.axis('off')
+                # Sinogram
+                ax2.imshow(sino_img, cmap='gray', aspect='auto', vmin=vmin_sino, vmax=vmax_sino)
+                ax2.set_title(f'Sinogram (Slice {idx_sino})')
+                ax2.set_xlabel("Detector Channels")
+                ax2.set_ylabel("Projection Angles")
+                
+                # Reconstruction
+                ax3.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
+                ax3.set_title(f'Reconstructed Slice {idx_reco} (Auto HU)')
+                ax3.axis('off')
+                
                 plt.tight_layout()
                 plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
                 print(f"🖼️ Visualization saved to: {plot_save_path}")
                 plt.show()
                 
             elif args.plot_result == 'sinogram':
-                plt.figure(figsize=(8, 6))
-                plt.imshow(sino_img, cmap='gray', aspect='auto')
-                plt.title('Sinogram (Central Slice)')
-                plt.axis('off')
+                plt.figure(figsize=(12, 10))
+                plt.imshow(sino_img, cmap='gray', aspect='auto', vmin=vmin_sino, vmax=vmax_sino)
+                plt.title(f'Perfect Fan-Beam Sinogram - Slice {idx_sino}', fontsize=16, fontweight='bold')
+                plt.xlabel("Detector Channels", fontsize=12)
+                plt.ylabel("Projection Angles", fontsize=12)
+                plt.colorbar(label="Attenuation")
                 plt.tight_layout()
                 plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
                 print(f"🖼️ Visualization saved to: {plot_save_path}")
@@ -155,8 +178,18 @@ def run(parser):
                 
             elif args.plot_result == 'reconstruction':
                 plt.figure(figsize=(8, 8))
-                plt.imshow(reco_img, cmap='gray', vmin=0, vmax=np.percentile(reco_img, 99))
-                plt.title('Reconstructed Slice')
+                plt.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
+                plt.title(f'Reconstructed Slice {idx_reco} (Auto HU)')
+                plt.axis('off')
+                plt.tight_layout()
+                plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
+                print(f"🖼️ Visualization saved to: {plot_save_path}")
+                plt.show()
+                
+            elif args.plot_result == 'drr':
+                plt.figure(figsize=(8, 8))
+                plt.imshow(drr_img, cmap='gray', aspect='auto', vmin=vmin_drr, vmax=vmax_drr)
+                plt.title(f'X-ray DRR (View {idx_view})')
                 plt.axis('off')
                 plt.tight_layout()
                 plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
@@ -184,9 +217,9 @@ if __name__ == '__main__':
     parser.add_argument('--tv_lambda', type=float, default=0.01,
                         help='TV regularisation strength (tv-sirt only, default: 0.01).')
     parser.add_argument('--save_all', dest='save_all', action='store_true', help='Save all intermediate results.')
-    parser.add_argument('--plot_result', type=str, default='both',
-                        choices=['none', 'sinogram', 'reconstruction', 'both'],
-                        help='Automatically display a plot after reconstruction: "both" (default), "sinogram", "reconstruction", or "none".')
+    parser.add_argument('--plot_result', type=str, default='all',
+                        choices=['none', 'sinogram', 'reconstruction', 'drr', 'both', 'all'],
+                        help='Automatically display a plot after reconstruction: "all" (default), "sinogram", "reconstruction", "drr", or "none".')
     parser.add_argument('--plot_slice', type=int, default=-1,
                         help='Specific slice index to plot. Default is -1 (which automatically selects the middle slice).')
     run(parser)
