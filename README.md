@@ -114,6 +114,16 @@ The pipeline now includes a built-in automated visualization feature that genera
 
 ![Automatic Visualization Pipeline](./img/scan_002_cgls_visualization.png)
 
+### 7. Differentiable FBP (PyTorch)
+A fully differentiable FBP operator implemented as a pure PyTorch `nn.Module`. This enables gradient flow through the entire reconstruction process, unlocking end-to-end learned reconstruction pipelines (FBPConvNet, Learned Primal-Dual, etc.).
+
+The operator is built from three independent, composable layers:
+- **CosineWeightLayer** — detector path-length correction
+- **RampFilterLayer** — FFT-based ramp filtering (optionally learnable)
+- **FanBeamBackProjectionLayer** — `grid_sample`-based backprojection with pre-computed geometry
+
+All geometry-dependent tensors are pre-computed in `__init__()` and registered as buffers. During `forward()`, only data-dependent operations and `grid_sample` calls remain, ensuring maximum throughput during training. The module includes built-in validation utilities: gradient flow test and adjoint consistency test.
+
 ---
 
 ## Project Structure
@@ -129,6 +139,7 @@ Helix2Fan-Modern/
 ├── run_astra_fbp.py         # GPU FBP reconstruction via ASTRA Toolbox
 ├── run_custom_fbp.py        # CPU FBP reconstruction via Numba JIT
 ├── run_astra_ir.py          # GPU Iterative Reconstruction (SIRT, SART, CGLS, TV-SIRT)
+├── run_differentiable_fbp.py # Differentiable FBP (PyTorch nn.Module)
 │
 ├── performance_benchmark.png  # Speed comparison chart
 ├── LICENSE.md               # Apache 2.0 License
@@ -232,6 +243,7 @@ All iterative methods require **ASTRA Toolbox** and a **CUDA-capable GPU**. Due 
 | Method | `--reco_method` | Best For | Speed |
 |---|---|---|---|
 | **FBP** *(default)* | `fbp` | General use, maximum speed | ~13s (GPU) / ~6min (CPU) |
+| **Diff-FBP** | `diff-fbp` | Learned reconstruction, end-to-end training | Comparable to GPU FBP |
 | **SIRT** | `sirt` | Low-dose CT, noisy data | Moderate (depends on iterations) |
 | **SART** | `sart` | Balanced quality and speed | Faster than SIRT per iteration |
 | **CGLS** | `cgls` | Fast convergence, fewer iterations needed | Fastest IR convergence |
@@ -267,6 +279,34 @@ python main.py \
 ```
 
 > **Tip on `--tv_lambda`:** Start with `0.01`. Increase it (e.g. `0.05`) for more aggressive noise removal at the cost of some fine detail. Decrease it (e.g. `0.001`) to preserve more texture.
+
+### Example: Differentiable FBP
+
+```bash
+# Differentiable FBP — same output as standard FBP, but fully differentiable
+python main.py \
+  --path_dicom '/data/LDCT/patient_001' \
+  --reco_method diff-fbp \
+  --fbp_filter 'ram-lak'
+```
+
+The differentiable FBP module can also be imported directly for use in custom training loops:
+
+```python
+from run_differentiable_fbp import DifferentiableFanBeamFBP
+
+model = DifferentiableFanBeamFBP(
+    angles=angles_tensor, dso=dso, dsd=dsd,
+    du=du, det_count=736, image_size=512,
+    filter_name='ram-lak', learnable_filter=False
+).cuda()
+
+# Use in a training loop
+sinogram = torch.tensor(sino_data, requires_grad=True).cuda()
+reconstruction = model(sinogram)   # (B, 1, 512, 512)
+loss = criterion(reconstruction, target)
+loss.backward()  # Gradients flow all the way to sinogram
+```
 
 ### Example: Custom FBP Filter
 

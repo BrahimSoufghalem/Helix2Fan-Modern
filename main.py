@@ -68,8 +68,38 @@ def run(parser):
         pass
 
     is_ir = args.reco_method in ('sirt', 'sart', 'cgls', 'tv-sirt')
+    is_diff_fbp = args.reco_method == 'diff-fbp'
 
-    if is_ir:
+    if is_diff_fbp:
+        # Differentiable FBP requires PyTorch
+        try:
+            import torch
+            print(f"\U0001f9ea PyTorch detected (device: {'cuda' if torch.cuda.is_available() else 'cpu'}). Launching Differentiable FBP...")
+            from run_differentiable_fbp import run_differentiable_fbp
+            run_differentiable_fbp(
+                str(flat_fan_path), str(output_file),
+                fbp_filter=args.fbp_filter,
+                run_validation=True,
+            )
+        except ImportError:
+            print("PyTorch is required for diff-fbp. Install: pip install torch")
+            print("Falling back to standard FBP...")
+            if astra_available:
+                from run_astra_fbp import run_astra_fbp
+                run_astra_fbp(str(flat_fan_path), str(output_file), filter_type=args.fbp_filter)
+            else:
+                from run_custom_fbp import run_custom_fbp
+                run_custom_fbp(str(flat_fan_path), str(output_file), fbp_filter=args.fbp_filter)
+        except Exception as e:
+            print(f"Differentiable FBP failed ({e}). Falling back to standard FBP...")
+            if astra_available:
+                from run_astra_fbp import run_astra_fbp
+                run_astra_fbp(str(flat_fan_path), str(output_file), filter_type=args.fbp_filter)
+            else:
+                from run_custom_fbp import run_custom_fbp
+                run_custom_fbp(str(flat_fan_path), str(output_file), fbp_filter=args.fbp_filter)
+
+    elif is_ir:
         # Iterative Reconstruction always requires ASTRA (GPU)
         if not astra_available:
             print("❌ Iterative Reconstruction requires ASTRA Toolbox (GPU).")
@@ -215,8 +245,8 @@ if __name__ == '__main__':
     parser.add_argument('--idx_proj_stop', type=int, default=16000, help='Last index of helical projections that are processed.')
     # ── Reconstruction ────────────────────────────────────────────────────
     parser.add_argument('--reco_method', type=str, default='fbp',
-                        choices=['fbp', 'sirt', 'sart', 'cgls', 'tv-sirt'],
-                        help='Reconstruction method: fbp (fast), sirt/sart/cgls/tv-sirt (iterative, GPU required).')
+                        choices=['fbp', 'diff-fbp', 'sirt', 'sart', 'cgls', 'tv-sirt'],
+                        help='Reconstruction method: fbp (fast), diff-fbp (differentiable PyTorch FBP), sirt/sart/cgls/tv-sirt (iterative, GPU required).')
     parser.add_argument('--fbp_filter', type=str, default='hann',
                         help='FBP filter type (fbp mode only). Options: hann, hamming, shepp-logan, ram-lak, none.')
     parser.add_argument('--iterations', type=int, default=100,
