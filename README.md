@@ -43,16 +43,16 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 
 ![Performance Benchmarks](./img/performance_benchmark.png)
 
-> *Benchmarks measured on a typical abdomen CT scan with ~4000 projections (indices 12000–16000). Results may vary depending on scan size and hardware.*
+> *Benchmarks measured on a typical abdomen CT scan with ~13000 projections . Results may vary depending on scan size and hardware.*
 
 ### Rebinning: From Hours to Minutes
 
-The original code implemented both rebinning steps using **triple-nested pure Python loops** — iterating over every combination of (view angle × detector row × detector column). For 4000 projections on a typical detector grid of ~700×64 pixels, this means hundreds of millions of individual Python interpreter calls.
+The original code implemented both rebinning steps using **triple-nested pure Python loops** — iterating over every combination of (view angle × detector row × detector column). For 13000 projections on a typical detector grid of ~700×64 pixels, this means hundreds of millions of individual Python interpreter calls.
 
 | Step | Original helix2fan | Helix2Fan Modern | Speedup |
 |---|---|---|---|
-| Curved → Flat Detector | ~2 hours | ~1 minute | **×120** |
-| Helical → 2π Fan-Beam | ~2 hours | ~1 minute | **×120** |
+| Curved → Flat Detector | ~3 hours | ~1 minute | **×120** |
+| Helical → 2π Fan-Beam | ~1 hours | ~1 minute | **×120** |
 | **Total Rebinning** | **~4 hours** | **~2 minutes** | **×120** |
 
 This fork precomputes the entire interpolation coordinate grid **once** using NumPy broadcasting, then delegates the actual interpolation to `scipy.ndimage.map_coordinates` — a compiled C routine that processes the whole array in a single call.
@@ -63,7 +63,7 @@ This fork precomputes the entire interpolation coordinate grid **once** using Nu
 |---|---|---|
 | `torch_radon` (original) | ~15 seconds | Deprecated — broken on modern PyTorch versions |
 | **Numba CPU** (this fork) | **~6 minutes** | Works on any machine, no GPU required |
-| **ASTRA GPU** (this fork) | **~13 seconds** | Fastest — production quality, no patching needed |
+| **ASTRA GPU** (this fork) | **~15 seconds** | Fastest — production quality, no patching needed |
 
 The ASTRA GPU path delivers essentially the same speed as `torch_radon` — but with zero patching or compatibility issues, natively supporting all ASTRA 2D filters. The Numba CPU path is a full mathematical FBP implementation (cosine weighting → Ram-Lak filtering → fan-beam backprojection) that runs on any laptop or server. 
 
@@ -297,7 +297,7 @@ python main.py \
 - **Choosing `--idx_proj_start` / `--idx_proj_stop`:** You need to load enough helical projections to cover at least 360° for the body region you want. A range of ~4000 projections typically covers one rotation. Loading too few projections causes streak artifacts at the top and bottom slices.
 - **Selecting a region of interest:** Each scan has tens of thousands of projections. Start with the default range (12000–16000) and adjust based on which anatomical region you're interested in.
 - **Flying Focal Spot (FFS):** The parameters `--dangles`, `--dz`, `--drho` are correctly extracted from the DICOM headers (as in the original project) but FFS correction is not yet applied during backprojection. Reconstruction quality is still reasonable without it.
-- **Memory:** Loading 4000 projections at full resolution can use several GB of RAM. Use a smaller range if memory is limited.
+- **Memory:** Loading 13000 projections at full resolution can use several GB of RAM. Use a smaller range if memory is limited.
 
 ---
 
