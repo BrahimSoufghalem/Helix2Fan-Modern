@@ -315,12 +315,15 @@ class DifferentiableFanBeamFBP(nn.Module):
         learnable_filter: If True, the ramp filter becomes a trainable
                           nn.Parameter (for learned reconstruction).
         chunk_size      : Angles per GPU batch in backprojection.
+        hu_factor       : Optional scalar representing the attenuation coefficient of water.
+                          If provided, the output is scaled to Hounsfield Units (HU).
+                          If None, outputs raw attenuation coefficients.
     """
 
     def __init__(self, angles, dso: float, dsd: float, du: float,
                  det_count: int, image_size: int,
                  filter_name: str = 'ram-lak', learnable_filter: bool = False,
-                 chunk_size: int = 64):
+                 chunk_size: int = 64, hu_factor: float = None):
         super().__init__()
         if not isinstance(angles, torch.Tensor):
             angles = torch.tensor(angles, dtype=torch.float32)
@@ -330,6 +333,8 @@ class DifferentiableFanBeamFBP(nn.Module):
             det_count, du, filter_name, learnable_filter)
         self.backprojector = FanBeamBackProjectionLayer(
             angles, dso, dsd, du, det_count, image_size, chunk_size)
+        
+        self.hu_factor = hu_factor
 
     def forward(self, sinogram: 'torch.Tensor') -> 'torch.Tensor':
         """
@@ -341,6 +346,11 @@ class DifferentiableFanBeamFBP(nn.Module):
         x = self.cosine_weight(sinogram)
         x = self.ramp_filter(x)
         x = self.backprojector(x)
+        
+        if self.hu_factor is not None:
+            # Scale raw attenuation to Hounsfield Units differentiably
+            x = 1000.0 * ((x - self.hu_factor) / self.hu_factor)
+            
         return x
 
 
@@ -480,7 +490,8 @@ def run_differentiable_fbp(input_file, output_file, image_size=512,
     angles_tensor = torch.tensor(angles, dtype=torch.float32)
 
     # ── Create the differentiable FBP module ──────────────────────────────
-    print(f"Building DifferentiableFanBeamFBP module (filter={fbp_filter})...")
+    hu_factor = metadata.get('hu_factor', 1.0)
+    print(f"Building DifferentiableFanBeamFBP module (filter={fbp_filter}, hu_factor={hu_factor})...")
     model = DifferentiableFanBeamFBP(
         angles=angles_tensor,
         dso=dso_px,
@@ -491,6 +502,7 @@ def run_differentiable_fbp(input_file, output_file, image_size=512,
         filter_name=fbp_filter,
         learnable_filter=False,
         chunk_size=64,
+        hu_factor=hu_factor
     ).to(device)
     model.eval()
 
@@ -525,23 +537,20 @@ def run_differentiable_fbp(input_file, output_file, image_size=512,
     print(f"\nTotal reconstruction time: {elapsed:.2f}s "
           f"({elapsed / num_slices:.2f}s per slice)")
 
-    # ── Convert to Hounsfield Units ───────────────────────────────────────
-    print("Scaling reconstruction to Hounsfield Units (HU)...")
-    hu_factor = metadata.get('hu_factor', 1.0)
-    fbp_hu = 1000.0 * ((reco_volume - hu_factor) / hu_factor)
-
     # ── Save ──────────────────────────────────────────────────────────────
     print(f"Saving reconstruction to {output_file} ...")
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
-    save_to_tiff_stack(fbp_hu, Path(output_file))
+    save_to_tiff_stack(reco_volume, Path(output_file))
 
     # ── Validation ────────────────────────────────────────────────────────
     if run_validation:
         print(f"\n{'─'*60}")
         print("  Running Validation Tests")
         print(f"{'─'*60}")
+        # Test gradient flow and adjoint on the base unscaled module if needed,
+        # but gradient flow still works perfectly through linear HU scaling
         test_gradient_flow(model, len(angles), det_count, device)
         test_adjoint(model.backprojector, len(angles), det_count, device)
 
     print("\nDifferentiable FBP reconstruction complete!")
-    return projections, fbp_hu
+    return projections, reco_volume
