@@ -130,7 +130,6 @@ Helix2Fan-Modern/
 ├── run_astra_ir.py          # GPU Iterative Reconstruction (SIRT, SART, CGLS, TV-SIRT)
 ├── run_differentiable_fbp.py # Differentiable FBP (PyTorch nn.Module)
 │
-├── performance_benchmark.png  # Speed comparison chart
 ├── LICENSE.md               # Apache 2.0 License
 └── README.md                # This file
 ```
@@ -216,7 +215,7 @@ All output is saved to the `out/` folder by default.
 
 | Argument | Default | Description |
 |---|---|---|
-| `--reco_method` | `fbp` | Method: `fbp`, `sirt`, `sart`, `cgls`, `tv-sirt` |
+| `--reco_method` | `fbp` | Method: `fbp`, `diff-fbp`, `sirt`, `sart`, `cgls`, `tv-sirt` |
 | `--fbp_filter` | `hann` | FBP filter *(fbp mode only)*: `hann`, `hamming`, `shepp-logan`, `cosine`, `ramp`, `none` |
 | `--iterations` | `100` | Number of iterations *(IR modes only)* |
 | `--tv_lambda` | `0.01` | TV regularisation strength *(tv-sirt only)* — higher = smoother |
