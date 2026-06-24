@@ -31,7 +31,7 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 | Helical→Fan Rebinning | ~1 hours `O(N³)` loops | ~1 minute vectorized |
 | **Total Rebinning Time** | **~4 hours** | **~2 minutes** |
 | FBP Reconstruction (CPU) | `torch_radon` broken | ~6 minutes (Numba) |
-| FBP Reconstruction (GPU) | ~15s `torch_radon` | ~15s ASTRA Toolbox |
+| FBP Reconstruction (GPU) | ~15s `torch_radon` | ~13s ASTRA Toolbox |
 | Iterative Reconstruction (IR)| Not Supported | SIRT, SART, CGLS, TV-SIRT |
 | Reconstruction Dependency | `torch_radon` (deprecated) | ASTRA (GPU) + Numba (CPU) |
 | Pipeline | Two separate scripts | Unified single command |
@@ -63,7 +63,7 @@ This fork precomputes the entire interpolation coordinate grid **once** using Nu
 |---|---|---|
 | `torch_radon` (original) | ~15 seconds | Deprecated — broken on modern PyTorch versions |
 | **Numba CPU** (this fork) | **~6 minutes** | Works on any machine, no GPU required |
-| **ASTRA GPU** (this fork) | **~15 seconds** | Fastest — production quality, no patching needed |
+| **ASTRA GPU** (this fork) | **~13 seconds** | Fastest — production quality, no patching needed |
 
 The ASTRA GPU path delivers essentially the same speed as `torch_radon` — but with zero patching or compatibility issues, natively supporting all ASTRA 2D filters. The Numba CPU path is a full mathematical FBP implementation (cosine weighting → Ram-Lak filtering → fan-beam backprojection) that runs on any laptop or server. 
 
