@@ -261,6 +261,7 @@ if __name__ == '__main__':
     parser.add_argument('--scan_id', type=str, default='scan_001', help='Custom scan ID.')
     parser.add_argument('--idx_proj_start', type=int, default=12000, help='First index of helical projections that are processed.')
     parser.add_argument('--idx_proj_stop', type=int, default=16000, help='Last index of helical projections that are processed.')
+    parser.add_argument('--idx_proj', type=str, default=None, help='Set to "all" to process all projections, overriding start and stop indices.')
     # ── Reconstruction ────────────────────────────────────────────────────
     parser.add_argument('--reco_method', type=str, default='fbp',
                         choices=['fbp', 'diff-fbp', 'sirt', 'sart', 'cgls', 'tv-sirt', 'none'],

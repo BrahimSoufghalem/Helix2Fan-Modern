@@ -85,7 +85,11 @@ def read_dicom(parser):
     parameters for rebinning and reconstruction
     """
     args = parser.parse_args()
-    indices = slice(args.idx_proj_start, args.idx_proj_stop)
+    if getattr(args, 'idx_proj', None) == 'all':
+        indices = slice(None, None)
+    else:
+        indices = slice(args.idx_proj_start, args.idx_proj_stop)
+        
     data_headers, raw_projections = read_projections(args.path_dicom, indices)
 
     # Read geometry information from the DICOM headers following instructions from the
@@ -116,7 +120,9 @@ def read_dicom(parser):
     pitch = abs(pitch)
 
     # Create parser.
-    parser.add_argument('--indices', type=int, default=[indices.start, indices.stop],
+    idx_start = indices.start if indices.start is not None else 0
+    idx_stop = indices.stop if indices.stop is not None else -1
+    parser.add_argument('--indices', type=int, default=[idx_start, idx_stop],
                         help='Index range of loaded and processed helical projections.')
     parser.add_argument('--nu', type=int, default=nu,
                         help='Number of scanner detector rows [].')
