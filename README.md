@@ -30,10 +30,9 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 | Curved→Flat Rebinning | ~3 hours `O(N³)` loops | ~1 minute vectorized |
 | Helical→Fan Rebinning | ~1 hours `O(N³)` loops | ~1 minute vectorized |
 | **Total Rebinning Time** | **~4 hours** | **~2 minutes** |
-| FBP Reconstruction (CPU) | `torch_radon` broken | ~6 minutes (Numba) |
-| FBP Reconstruction (GPU) | ~15s `torch_radon` | ~13s ASTRA Toolbox |
+| FBP Reconstruction | `torch_radon` | ASTRA (GPU) + Numba (CPU) |
 | Iterative Reconstruction (IR)| Not Supported | SIRT, SART, CGLS, TV-SIRT |
-| Reconstruction Dependency | `torch_radon` (deprecated) | ASTRA (GPU) + Numba (CPU) |
+| Differentiable FBP | `torch_radon` (outdated/buggy) | Custom PyTorch (manual & robust) |
 | Pipeline | Two separate scripts | Unified single command |
 | Setup Complexity | High (torch-radon patching) | Simple pip install |
 
@@ -56,16 +55,6 @@ The original code implemented both rebinning steps using **triple-nested pure Py
 | **Total Rebinning** | **~4 hours** | **~2 minutes** | **×120** |
 
 This fork precomputes the entire interpolation coordinate grid **once** using NumPy broadcasting, then delegates the actual interpolation to `scipy.ndimage.map_coordinates` — a compiled C routine that processes the whole array in a single call.
-
-### FBP Reconstruction
-
-| Backend | Time | Status |
-|---|---|---|
-| `torch_radon` (original) | ~15 seconds | Deprecated — broken on modern PyTorch versions |
-| **Numba CPU** (this fork) | **~6 minutes** | Works on any machine, no GPU required |
-| **ASTRA GPU** (this fork) | **~13 seconds** | Fastest — production quality, no patching needed |
-
-The ASTRA GPU path delivers essentially the same speed as `torch_radon` — but with zero patching or compatibility issues, natively supporting all ASTRA 2D filters. The Numba CPU path is a full mathematical FBP implementation (cosine weighting → Ram-Lak filtering → fan-beam backprojection) that runs on any laptop or server. 
 
 **Supported Reconstruction Filters:**
 You can change the reconstruction filter directly from the command line using `--fbp_filter`.
