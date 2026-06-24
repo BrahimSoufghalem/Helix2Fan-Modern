@@ -69,8 +69,12 @@ def run(parser):
 
     is_ir = args.reco_method in ('sirt', 'sart', 'cgls', 'tv-sirt')
     is_diff_fbp = args.reco_method == 'diff-fbp'
+    is_none = args.reco_method == 'none'
 
-    if is_diff_fbp:
+    if is_none:
+        print("⏭️ Skipping reconstruction as requested (--reco_method none).")
+        
+    elif is_diff_fbp:
         # Differentiable FBP requires PyTorch
         try:
             import torch
@@ -137,22 +141,28 @@ def run(parser):
             from run_custom_fbp import run_custom_fbp
             run_custom_fbp(str(flat_fan_path), str(output_file), fbp_filter=args.fbp_filter)
         
-    print("\n✅ End-to-end pipeline completed successfully!")
+    if not is_none:
+        print("\n✅ End-to-end pipeline completed successfully!")
+    else:
+        print("\n✅ Rebinning pipeline completed successfully!")
 
     if getattr(args, 'plot_result', 'none') != 'none':
         try:
             import matplotlib.pyplot as plt
             print("\n📊 Generating visualization...")
             sino_stack, _ = load_tiff_stack_with_metadata(flat_fan_path)
-            reco_stack, _ = load_tiff_stack_with_metadata(output_file)
+            
+            has_reco = args.reco_method != 'none'
+            if has_reco:
+                reco_stack, _ = load_tiff_stack_with_metadata(output_file)
             
             slice_idx = getattr(args, 'plot_slice', -1)
             if slice_idx == -1:
                 idx_sino = sino_stack.shape[2] // 2
-                idx_reco = reco_stack.shape[0] // 2
+                idx_reco = reco_stack.shape[0] // 2 if has_reco else 0
             else:
                 idx_sino = min(slice_idx, sino_stack.shape[2] - 1)
-                idx_reco = min(slice_idx, reco_stack.shape[0] - 1)
+                idx_reco = min(slice_idx, reco_stack.shape[0] - 1) if has_reco else 0
             
             idx_view = sino_stack.shape[0] // 2
             
@@ -164,21 +174,25 @@ def run(parser):
             sino_img = sino_stack[:, :, idx_sino].T
             vmin_sino, vmax_sino = np.percentile(sino_img, 2), np.percentile(sino_img, 98)
             
-            # 3. Reconstructed Slice (CT)
-            reco_img = reco_stack[idx_reco]
-            vmin_reco, vmax_reco = np.percentile(reco_img, 1), np.percentile(reco_img, 99)
-            
-            # Determine Reconstruction Title
-            if args.reco_method == 'fbp':
-                recon_method_str = "FBP"
-            else:
-                recon_method_str = f"{args.reco_method.upper()}, {args.iterations} Iters"
-            reco_title = f'Reconstructed Slice {idx_reco} ({recon_method_str}, Auto HU)'
+            if has_reco:
+                # 3. Reconstructed Slice (CT)
+                reco_img = reco_stack[idx_reco]
+                vmin_reco, vmax_reco = np.percentile(reco_img, 1), np.percentile(reco_img, 99)
+                
+                # Determine Reconstruction Title
+                if args.reco_method == 'fbp':
+                    recon_method_str = "FBP"
+                else:
+                    recon_method_str = f"{args.reco_method.upper()}, {args.iterations} Iters"
+                reco_title = f'Reconstructed Slice {idx_reco} ({recon_method_str}, Auto HU)'
 
             plot_save_path = output_file.parent / f"{args.scan_id}_visualization.png"
 
             if args.plot_result in ['both', 'all']:
-                fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
+                if has_reco:
+                    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
+                else:
+                    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
                 
                 # DRR
                 ax1.imshow(drr_img, cmap='gray', aspect='auto', vmin=vmin_drr, vmax=vmax_drr)
@@ -191,10 +205,11 @@ def run(parser):
                 ax2.set_xlabel("Projection Angles")
                 ax2.set_ylabel("Detector Channels")
                 
-                # Reconstruction
-                ax3.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
-                ax3.set_title(reco_title)
-                ax3.axis('off')
+                if has_reco:
+                    # Reconstruction
+                    ax3.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
+                    ax3.set_title(reco_title)
+                    ax3.axis('off')
                 
                 plt.tight_layout()
                 plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
@@ -214,14 +229,17 @@ def run(parser):
                 plt.show()
                 
             elif args.plot_result == 'reconstruction':
-                plt.figure(figsize=(8, 8))
-                plt.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
-                plt.title(reco_title)
-                plt.axis('off')
-                plt.tight_layout()
-                plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
-                print(f"🖼️ Visualization saved to: {plot_save_path}")
-                plt.show()
+                if has_reco:
+                    plt.figure(figsize=(8, 8))
+                    plt.imshow(reco_img, cmap='gray', vmin=vmin_reco, vmax=vmax_reco)
+                    plt.title(reco_title)
+                    plt.axis('off')
+                    plt.tight_layout()
+                    plt.savefig(plot_save_path, dpi=300, bbox_inches='tight')
+                    print(f"🖼️ Visualization saved to: {plot_save_path}")
+                    plt.show()
+                else:
+                    print("⚠️ Cannot plot reconstruction because --reco_method none was used.")
                 
             elif args.plot_result == 'drr':
                 plt.figure(figsize=(8, 8))
@@ -245,8 +263,8 @@ if __name__ == '__main__':
     parser.add_argument('--idx_proj_stop', type=int, default=16000, help='Last index of helical projections that are processed.')
     # ── Reconstruction ────────────────────────────────────────────────────
     parser.add_argument('--reco_method', type=str, default='fbp',
-                        choices=['fbp', 'diff-fbp', 'sirt', 'sart', 'cgls', 'tv-sirt'],
-                        help='Reconstruction method: fbp (fast), diff-fbp (differentiable PyTorch FBP), sirt/sart/cgls/tv-sirt (iterative, GPU required).')
+                        choices=['fbp', 'diff-fbp', 'sirt', 'sart', 'cgls', 'tv-sirt', 'none'],
+                        help='Reconstruction method: fbp (fast), diff-fbp (differentiable PyTorch FBP), sirt/sart/cgls/tv-sirt (iterative, GPU required), or none (skip reconstruction).')
     parser.add_argument('--fbp_filter', type=str, default='hann',
                         help='FBP filter type (fbp mode only). Options: hann, hamming, shepp-logan, ram-lak, none.')
     parser.add_argument('--iterations', type=int, default=100,
