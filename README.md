@@ -111,7 +111,7 @@ The operator is built from three independent, composable layers:
 - **RampFilterLayer** — FFT-based ramp filtering (optionally learnable)
 - **FanBeamBackProjectionLayer** — `grid_sample`-based backprojection with pre-computed geometry
 
-All geometry-dependent tensors are pre-computed in `__init__()` and registered as buffers. During `forward()`, only data-dependent operations and `grid_sample` calls remain, ensuring maximum throughput during training. The module includes built-in validation utilities: gradient flow test and adjoint consistency test.
+All geometry-dependent tensors are pre-computed in `__init__()` and registered as buffers. During `forward()`, only data-dependent operations and `grid_sample` calls remain. The module also natively scales the output to Hounsfield Units (HU) inside the computational graph, ensuring the loss gradients flow perfectly back to the sinogram. The module includes built-in validation utilities: gradient flow test and adjoint consistency test.
 
 ---
 
@@ -207,6 +207,7 @@ All output is saved to the `out/` folder by default.
 | `--scan_id` | `scan_001` | Prefix name for all output files |
 | `--idx_proj_start` | `12000` | First DICOM index to load |
 | `--idx_proj_stop` | `16000` | Last DICOM index to load |
+| `--idx_proj` | `None` | Set to `all` to process **all** projections in the directory (overrides start/stop) |
 | `--save_all` | `False` | Also saves intermediate curved-helix and flat-helix projections |
 | `--plot_result`| `all` | Display visualization after run: `all` (default), `sinogram`, `drr`, `reconstruction`, or `none` |
 | `--plot_slice` | `-1` | Specific slice index to plot. `-1` automatically selects the middle slice |
@@ -215,7 +216,7 @@ All output is saved to the `out/` folder by default.
 
 | Argument | Default | Description |
 |---|---|---|
-| `--reco_method` | `fbp` | Method: `fbp`, `diff-fbp`, `sirt`, `sart`, `cgls`, `tv-sirt` |
+| `--reco_method` | `fbp` | Method: `fbp`, `diff-fbp`, `sirt`, `sart`, `cgls`, `tv-sirt`, or `none` (to skip reconstruction) |
 | `--fbp_filter` | `hann` | FBP filter *(fbp mode only)*: `hann`, `hamming`, `shepp-logan`, `cosine`, `ramp`, `none` |
 | `--iterations` | `100` | Number of iterations *(IR modes only)* |
 | `--tv_lambda` | `0.01` | TV regularisation strength *(tv-sirt only)* — higher = smoother |
@@ -316,6 +317,17 @@ python main.py \
   --idx_proj_start 10000 \
   --idx_proj_stop 14000 \
   --save_all
+```
+
+### Example: Process All Data & Skip Reconstruction
+
+If you only want to generate the Rebinning Sinograms for an entire patient folder and skip the time-consuming reconstruction phase:
+
+```bash
+python main.py \
+  --path_dicom '/data/LDCT/patient_001' \
+  --idx_proj all \
+  --reco_method none
 ```
 
 ---
