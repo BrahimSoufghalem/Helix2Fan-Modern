@@ -27,8 +27,8 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 | Feature | Original helix2fan | Helix2Fan Modern |
 |---|---|---|
 | DICOM Sorting | Alphabetical (filename) | Physical (`InstanceNumber`) |
-| Curved→Flat Rebinning | ~2 hours `O(N³)` loops | ~1 minute vectorized |
-| Helical→Fan Rebinning | ~2 hours `O(N³)` loops | ~1 minute vectorized |
+| Curved→Flat Rebinning | ~3 hours `O(N³)` loops | ~1 minute vectorized |
+| Helical→Fan Rebinning | ~1 hours `O(N³)` loops | ~1 minute vectorized |
 | **Total Rebinning Time** | **~4 hours** | **~2 minutes** |
 | FBP Reconstruction (CPU) | `torch_radon` broken | ~6 minutes (Numba) |
 | FBP Reconstruction (GPU) | ~15s `torch_radon` | ~13s ASTRA Toolbox |
