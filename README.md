@@ -31,7 +31,7 @@ It is based on the rebinning algorithm of [Noo et al.](https://doi.org/10.1088/0
 | Helical→Fan Rebinning | ~1 hours `O(N³)` loops | ~1 minute vectorized |
 | **Total Rebinning Time** | **~4 hours** | **~2 minutes** |
 | FBP Reconstruction (CPU) | `torch_radon` broken | ~6 minutes (Numba) |
-| FBP Reconstruction (GPU) | ~15s `torch_radon` | ~13s ASTRA Toolbox |
+| FBP Reconstruction (GPU) | ~15s `torch_radon` | ~15s ASTRA Toolbox |
 | Iterative Reconstruction (IR)| Not Supported | SIRT, SART, CGLS, TV-SIRT |
 | Reconstruction Dependency | `torch_radon` (deprecated) | ASTRA (GPU) + Numba (CPU) |
 | Pipeline | Two separate scripts | Unified single command |
