@@ -281,6 +281,7 @@ class FanBeamBackProjectionLayer(nn.Module):
             interp = interp.reshape(B, C, self.image_size, self.image_size)
 
             # Distance weighting: D_so^2 / L^2, shape (C, H, W)
+            L = torch.clamp(L, min=1.0)
             weight = self._dso_sq / (L * L)
 
             # Accumulate weighted backprojection
